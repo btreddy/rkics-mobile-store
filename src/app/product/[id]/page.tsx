@@ -1,15 +1,33 @@
 'use client';
-import { products } from '@/data/products';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import { useCart } from '../../CartContext';
-import { use } from 'react';
 
 export default function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const product = products.find((p) => p.id === resolvedParams.id);
-  const { addToCart, cartCount } = useCart();
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { addToCart, cartCount, setIsCartOpen } = useCart();
 
-  if (!product) return <div className="p-8 text-center text-gray-600">Product not found</div>;
+  useEffect(() => {
+    async function loadProduct() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', resolvedParams.id)
+        .single();
+
+      if (!error && data) {
+        setProduct(data);
+      }
+      setLoading(false);
+    }
+    loadProduct();
+  }, [resolvedParams.id]);
+
+  if (loading) return <div className="p-8 text-center text-gray-500">Loading details...</div>;
+  if (!product) return <div className="p-8 text-center text-gray-600">Product not found.</div>;
 
   return (
     <main className="max-w-md mx-auto bg-white min-h-screen pb-20">
@@ -18,14 +36,23 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           <Link href="/" className="text-blue-600 mr-4 font-bold text-xl">←</Link>
           <h1 className="text-lg font-bold text-gray-800 truncate">Details</h1>
         </div>
-        <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">
+        <button 
+          onClick={() => setIsCartOpen(true)}
+          className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold"
+        >
           Cart: {cartCount}
-        </div>
+        </button>
       </header>
 
-      <div className="bg-gray-100 h-64 flex flex-col items-center justify-center text-gray-500 border-b">
-        <span className="text-xs">Image Path:</span>
-        <span className="font-bold">{product.imagePlaceholder}</span>
+      <div className="bg-gray-100 h-64 flex flex-col items-center justify-center text-gray-500 border-b overflow-hidden">
+        {product.imagePlaceholder?.startsWith('http') ? (
+          <img src={product.imagePlaceholder} alt={product.name} className="h-full object-contain p-4" />
+        ) : (
+          <div className="text-center p-4">
+            <p className="text-xs text-gray-400">Image Reference:</p>
+            <p className="font-semibold text-sm">{product.imagePlaceholder || 'No image uploaded'}</p>
+          </div>
+        )}
       </div>
 
       <div className="p-5">
@@ -34,14 +61,19 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         
         <div className="flex items-baseline space-x-3 mb-4">
           <span className="text-2xl font-bold text-green-700">₹{product.price}</span>
-          <span className="line-through text-gray-400">₹{product.originalPrice}</span>
-          <span className="bg-red-100 text-red-600 px-2 py-1 text-xs font-bold rounded">{product.discount}</span>
+          {product.originalPrice && (
+            <span className="line-through text-gray-400">₹{product.originalPrice}</span>
+          )}
+          {product.discount && (
+            <span className="bg-red-100 text-red-600 px-2 py-1 text-xs font-bold rounded">{product.discount}</span>
+          )}
         </div>
 
-        {/* Local PDS Download Link */}
         {product.pdsLink && (
           <a
             href={product.pdsLink}
+            target="_blank"
+            rel="noopener noreferrer"
             download
             className="inline-flex items-center gap-2 mb-5 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 py-2.5 px-4 rounded-lg hover:bg-blue-100 active:bg-blue-200 transition"
           >
@@ -52,7 +84,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
         <hr className="my-5 border-gray-200" />
         <h3 className="font-bold text-gray-800 mb-2">Product Description</h3>
-        <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description}</p>
+        <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description || 'No description provided.'}</p>
 
         <div className="flex space-x-3 mt-8">
           <button 
