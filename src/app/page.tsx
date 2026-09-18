@@ -80,6 +80,12 @@ export default function Home() {
           ))}
         </div>
       )}
+      <footer className="mt-12 py-6 border-t border-gray-200 text-center text-xs text-gray-400">
+  <p>© {new Date().getFullYear()} Integrated Concrete Solutions</p>
+  <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-1 inline-block">
+    Admin Portal
+  </Link>
+</footer>
     </main>
   );
 }
