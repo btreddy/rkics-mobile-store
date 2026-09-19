@@ -28,7 +28,7 @@ export function CartDrawer() {
     message += `%0A%0APlease confirm receipt and delivery dispatch.`;
     
     // Replace with your actual RKICS WhatsApp number (include country code 91)
-    window.open(`https://wa.me/919876543210?text=${message}`, '_blank');
+    window.open(`https://wa.me/917013007595?text=${message}`, '_blank');
     handleClose();
   };
 
