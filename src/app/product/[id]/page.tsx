@@ -31,6 +31,34 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
   return (
     <main className="max-w-md mx-auto bg-white min-h-screen pb-20">
+      {/* Product SEO Schema for Google */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "image": product.imagePlaceholder?.startsWith('http') ? product.imagePlaceholder : "https://store.rkics.com/icon-512.png",
+            "description": product.description || `Buy ${product.name} in bulk. Supplied by RKICS in Hyderabad.`,
+            "brand": {
+              "@type": "Brand",
+              "name": product.brand || "Construction Chemical"
+            },
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "INR",
+              "price": product.price,
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@type": "Organization",
+                "name": "Premier Engineering Systems (RKICS)"
+              }
+            }
+          })
+        }}
+      />
+
       <header className="flex justify-between items-center p-4 border-b sticky top-0 bg-white shadow-sm z-10">
         <div className="flex items-center">
           <Link href="/" className="text-blue-600 mr-4 font-bold text-xl">←</Link>
@@ -38,7 +66,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         </div>
         <button 
           onClick={() => setIsCartOpen(true)}
-          className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold"
+          className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold hover:bg-blue-200 transition"
         >
           Cart: {cartCount}
         </button>
@@ -84,7 +112,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
 
         <hr className="my-5 border-gray-200" />
         <h3 className="font-bold text-gray-800 mb-2">Product Description</h3>
-        <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description || 'No description provided.'}</p>
+        <p className="text-gray-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">{product.description || 'No description provided.'}</p>
 
         <div className="flex space-x-3 mt-8">
           <button 
@@ -95,15 +123,16 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           </button>
         </div>
       </div>
+
       <footer className="mt-12 py-8 px-4 border-t border-gray-200 text-center text-xs text-gray-400">
-  <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
-    RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
-  </p>
-  <p>© {new Date().getFullYear()} RKICS</p>
-  <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
-    Admin Portal
-  </Link>
-</footer>
+        <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
+          RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
+        </p>
+        <p>© {new Date().getFullYear()} RKICS</p>
+        <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
+          Admin Portal
+        </Link>
+      </footer>
     </main>
   );
 }
