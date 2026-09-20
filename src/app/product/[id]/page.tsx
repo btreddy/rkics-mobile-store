@@ -95,6 +95,15 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           </button>
         </div>
       </div>
+      <footer className="mt-12 py-8 px-4 border-t border-gray-200 text-center text-xs text-gray-400">
+  <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
+    RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
+  </p>
+  <p>© {new Date().getFullYear()} RKICS</p>
+  <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
+    Admin Portal
+  </Link>
+</footer>
     </main>
   );
 }
