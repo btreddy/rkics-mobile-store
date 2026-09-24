@@ -129,7 +129,7 @@ export default function AdminDashboard() {
       const productData = {
         brand,
         name,
-        price: parseFloat(price),
+        price: price ? parseFloat(price) : null,
         originalPrice: originalPrice ? parseFloat(originalPrice) : null,
         discount,
         description,
@@ -190,8 +190,9 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-3 gap-5">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Selling Price (₹)</label>
-              <input type="number" value={price} onChange={e => setPrice(e.target.value)} required className="w-full border p-2 rounded outline-none focus:border-blue-500" />
+              <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Selling Price (₹) (Optional)</label>
+              <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full border p-2 rounded outline-none focus:border-blue-500" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Original Price (Optional)</label>

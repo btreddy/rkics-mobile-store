@@ -45,16 +45,18 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
               "@type": "Brand",
               "name": product.brand || "Construction Chemical"
             },
-            "offers": {
-              "@type": "Offer",
-              "priceCurrency": "INR",
-              "price": product.price,
-              "availability": "https://schema.org/InStock",
-              "seller": {
-                "@type": "Organization",
-                "name": "Premier Engineering Systems (RKICS)"
+            ...(product.price && {
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "INR",
+                "price": product.price,
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                  "@type": "Organization",
+                  "name": "Premier Engineering Systems (RKICS)"
+                }
               }
-            }
+            })
           })
         }}
       />
@@ -88,12 +90,18 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">{product.name}</h1>
         
         <div className="flex items-baseline space-x-3 mb-4">
-          <span className="text-2xl font-bold text-green-700">₹{product.price}</span>
-          {product.originalPrice && (
-            <span className="line-through text-gray-400">₹{product.originalPrice}</span>
-          )}
-          {product.discount && (
-            <span className="bg-red-100 text-red-600 px-2 py-1 text-xs font-bold rounded">{product.discount}</span>
+          {product.price ? (
+            <>
+              <span className="text-2xl font-bold text-green-700">₹{product.price}</span>
+              {product.originalPrice && (
+                <span className="line-through text-gray-400">₹{product.originalPrice}</span>
+              )}
+              {product.discount && (
+                <span className="bg-red-100 text-red-600 px-2 py-1 text-xs font-bold rounded">{product.discount}</span>
+              )}
+            </>
+          ) : (
+            <span className="text-xl font-bold text-blue-800 bg-blue-50 px-3 py-1 rounded">Price on Request</span>
           )}
         </div>
 
@@ -115,12 +123,21 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
         <p className="text-gray-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap">{product.description || 'No description provided.'}</p>
 
         <div className="flex space-x-3 mt-8">
-          <button 
-            onClick={() => addToCart(product)} 
-            className="flex-1 bg-white border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors"
-          >
-            Add to Cart
-          </button>
+          {product.price ? (
+            <button 
+              onClick={() => addToCart(product)} 
+              className="flex-1 bg-white border-2 border-blue-600 text-blue-600 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors"
+            >
+              Add to Cart
+            </button>
+          ) : (
+            <button 
+              onClick={() => window.open(`https://wa.me/917013007595?text=Hi RKICS, I would like to request a bulk quote and lead time for ${product.name}.`, '_blank')}
+              className="flex-1 bg-[#25D366] text-white py-3 rounded-lg font-bold hover:bg-[#1EBE55] transition-colors flex items-center justify-center gap-2 shadow-lg"
+            >
+              Request Quote via WhatsApp
+            </button>
+          )}
         </div>
       </div>
 
