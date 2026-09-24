@@ -62,30 +62,49 @@ export default function Home() {
               </div>
               
               <div className="mt-auto">
-                <div className="flex items-center space-x-2 text-sm mb-1">
-                  <span className="font-bold text-green-700">₹{product.price}</span>
-                  {product.originalPrice && (
-                    <span className="line-through text-gray-400 text-xs">₹{product.originalPrice}</span>
-                  )}
-                </div>
-                {product.discount && (
-                  <span className="text-xs text-red-500 font-medium">{product.discount}</span>
+                {product.price ? (
+                  <>
+                    <div className="flex items-center space-x-2 text-sm mb-1">
+                      <span className="font-bold text-green-700">₹{product.price}</span>
+                      {product.originalPrice && (
+                        <span className="line-through text-gray-400 text-xs">₹{product.originalPrice}</span>
+                      )}
+                    </div>
+                    {product.discount && (
+                      <span className="text-xs text-red-500 font-medium mb-1 block">{product.discount}</span>
+                    )}
+                    <div className="w-full mt-3 bg-blue-600 text-white py-2 rounded text-sm font-semibold text-center transition-colors">
+                      View Details
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-2 mt-1">
+                      <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded inline-block">
+                        Quote on Request
+                      </span>
+                    </div>
+                    <div className="w-full mt-3 bg-[#25D366] text-white py-2 rounded text-sm font-semibold text-center transition-colors shadow-sm">
+                      Get Quote
+                    </div>
+                  </>
                 )}
-                
-                <div className="w-full mt-3 bg-blue-600 text-white py-2 rounded text-sm font-semibold text-center transition-colors">
-                  View Details
-                </div>
               </div>
             </Link>
           ))}
         </div>
       )}
-      <footer className="mt-12 py-6 border-t border-gray-200 text-center text-xs text-gray-400">
-  <p>© {new Date().getFullYear()} Integrated Concrete Solutions</p>
-  <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-1 inline-block">
-    Admin Portal
-  </Link>
-</footer>
+      
+      {/* I updated the footer here to match the legal compliance text you added to the product detail page earlier */}
+      <footer className="mt-12 py-8 px-4 border-t border-gray-200 text-center text-xs text-gray-400">
+        <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
+          RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
+        </p>
+        <p>© {new Date().getFullYear()} RKICS</p>
+        <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
+          Admin Portal
+        </Link>
+      </footer>
     </main>
   );
 }

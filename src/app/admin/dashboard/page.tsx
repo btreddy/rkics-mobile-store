@@ -24,7 +24,6 @@ export default function AdminDashboard() {
   const [existingImageUrl, setExistingImageUrl] = useState('');
   const [existingPdsUrl, setExistingPdsUrl] = useState('');
 
-  // Load products when dashboard opens
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -51,7 +50,6 @@ export default function AdminDashboard() {
     setExistingImageUrl('');
     setExistingPdsUrl('');
     
-    // Reset file inputs manually
     const imageInput = document.getElementById('image-upload') as HTMLInputElement;
     const pdsInput = document.getElementById('pds-upload') as HTMLInputElement;
     if (imageInput) imageInput.value = '';
@@ -62,8 +60,8 @@ export default function AdminDashboard() {
     setEditingId(product.id);
     setBrand(product.brand || '');
     setName(product.name || '');
-    setPrice(product.price?.toString() || '');
-    setOriginalPrice(product.originalPrice?.toString() || '');
+    setPrice(product.price ? product.price.toString() : '');
+    setOriginalPrice(product.originalPrice ? product.originalPrice.toString() : '');
     setDiscount(product.discount || '');
     setDescription(product.description || '');
     setExistingImageUrl(product.imagePlaceholder || '');
@@ -84,7 +82,7 @@ export default function AdminDashboard() {
       setMessage(`Error deleting: ${error.message}`);
     } else {
       setMessage('Product deleted successfully!');
-      fetchProducts(); // Refresh the list
+      fetchProducts();
     }
   }
 
@@ -97,7 +95,6 @@ export default function AdminDashboard() {
       let finalImageUrl = existingImageUrl;
       let finalPdsUrl = existingPdsUrl;
 
-      // 1. Upload new image if selected
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -106,12 +103,10 @@ export default function AdminDashboard() {
           .upload(fileName, imageFile);
 
         if (uploadError) throw uploadError;
-        
         const { data } = supabase.storage.from('images').getPublicUrl(fileName);
         finalImageUrl = data.publicUrl;
       }
 
-      // 2. Upload new PDS if selected
       if (pdsFile) {
         const fileExt = pdsFile.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
@@ -120,24 +115,25 @@ export default function AdminDashboard() {
           .upload(fileName, pdsFile);
 
         if (pdsUploadError) throw pdsUploadError;
-        
         const { data } = supabase.storage.from('pds').getPublicUrl(fileName);
         finalPdsUrl = data.publicUrl;
       }
 
-      // 3. Prepare database payload
+      // Bulletproof null handling for optional numbers
+      const parsedPrice = price.trim() === '' ? null : parseFloat(price);
+      const parsedOriginalPrice = originalPrice.trim() === '' ? null : parseFloat(originalPrice);
+
       const productData = {
         brand,
         name,
-        price: price ? parseFloat(price) : null,
-        originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
         discount,
         description,
         imagePlaceholder: finalImageUrl,
         pdsLink: finalPdsUrl,
       };
 
-      // 4. Update or Insert
       if (editingId) {
         const { error } = await supabase
           .from('products')
@@ -154,7 +150,7 @@ export default function AdminDashboard() {
       }
 
       resetForm();
-      fetchProducts(); // Refresh list after save
+      fetchProducts();
 
     } catch (error: any) {
       setMessage(`Error: ${error.message}`);
@@ -170,7 +166,6 @@ export default function AdminDashboard() {
         <Link href="/" className="text-blue-600 font-bold hover:underline">View Live Store →</Link>
       </div>
 
-      {/* FORM SECTION */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-12">
         <h2 className="text-xl font-bold mb-6 text-gray-800">
           {editingId ? 'Edit Product' : 'Add New Listing'}
@@ -190,9 +185,8 @@ export default function AdminDashboard() {
 
           <div className="grid grid-cols-3 gap-5">
             <div>
-              <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Selling Price (₹) (Optional)</label>
-              <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full border p-2 rounded outline-none focus:border-blue-500" />
+              <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full border p-2 rounded outline-none focus:border-blue-500" placeholder="Leave blank for quote" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Original Price (Optional)</label>
@@ -237,7 +231,6 @@ export default function AdminDashboard() {
         </form>
       </div>
 
-      {/* PRODUCT LIST SECTION */}
       <div>
         <h2 className="text-2xl font-black mb-6 text-gray-900 border-b pb-2">Manage Existing Products</h2>
         {products.length === 0 ? (
@@ -253,7 +246,11 @@ export default function AdminDashboard() {
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase">{product.brand}</p>
                     <p className="font-bold text-lg text-gray-900 leading-tight">{product.name}</p>
-                    <p className="text-green-700 font-bold">₹{product.price}</p>
+                    {product.price ? (
+                      <p className="text-green-700 font-bold">₹{product.price}</p>
+                    ) : (
+                      <p className="text-blue-600 font-bold text-sm bg-blue-50 px-2 py-0.5 rounded inline-block">Quote Only</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
