@@ -8,6 +8,7 @@ export default function Home() {
   const { cartCount, setIsCartOpen } = useCart();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     async function loadProducts() {
@@ -24,9 +25,18 @@ export default function Home() {
     loadProducts();
   }, []);
 
+  // Real-time filtering logic
+  const filteredProducts = products.filter(product => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(searchLower) ||
+      product.brand?.toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <main className="p-4 max-w-md mx-auto bg-gray-50 min-h-screen">
-      <header className="flex justify-between items-center mb-6 py-2 border-b sticky top-0 bg-gray-50 z-10">
+      <header className="flex justify-between items-center mb-4 py-2 bg-gray-50 z-20">
         <h1 className="text-xl font-bold text-gray-800">RKICS Store</h1>
         <button 
           onClick={() => setIsCartOpen(true)}
@@ -36,66 +46,95 @@ export default function Home() {
         </button>
       </header>
 
+      {/* STICKY SEARCH BAR */}
+      <div className="sticky top-0 z-10 bg-gray-50 pb-4 pt-1 shadow-sm">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search catalogs, brands, or systems..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full border-2 border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-500 transition-colors text-sm font-medium text-gray-700"
+          />
+          <span className="absolute left-3 top-3.5 text-gray-400">
+            🔍
+          </span>
+        </div>
+      </div>
+
       {loading ? (
         <div className="text-center text-gray-500 py-10 text-sm">Loading live products...</div>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
-          {products.map((product) => (
-            <Link 
-              href={`/product/${product.id}`} 
-              key={product.id} 
-              className="bg-white border rounded-lg p-3 shadow-sm flex flex-col hover:shadow-md transition-shadow cursor-pointer block"
-            >
-              <div className="bg-gray-100 h-32 rounded mb-3 flex items-center justify-center text-center text-xs text-gray-500 p-2 overflow-hidden">
-                {product.imagePlaceholder?.startsWith('http') ? (
-                  <img src={product.imagePlaceholder} alt={product.name} className="h-full object-contain" />
-                ) : (
-                  <span>[Image: {product.name}]</span>
-                )}
-              </div>
-              
-              <div className="flex-grow">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">{product.brand}</p>
-                <h2 className="text-sm font-semibold leading-tight mt-1 mb-2 text-gray-800 line-clamp-2">
-                  {product.name}
-                </h2>
-              </div>
-              
-              <div className="mt-auto">
-                {product.price ? (
-                  <>
-                    <div className="flex items-center space-x-2 text-sm mb-1">
-                      <span className="font-bold text-green-700">₹{product.price}</span>
-                      {product.originalPrice && (
-                        <span className="line-through text-gray-400 text-xs">₹{product.originalPrice}</span>
-                      )}
-                    </div>
-                    {product.discount && (
-                      <span className="text-xs text-red-500 font-medium mb-1 block">{product.discount}</span>
+        <>
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 font-medium">No products found for "{searchQuery}"</p>
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="mt-4 text-blue-600 text-sm font-bold underline"
+              >
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {filteredProducts.map((product) => (
+                <Link 
+                  href={`/product/${product.id}`} 
+                  key={product.id} 
+                  className="bg-white border rounded-lg p-3 shadow-sm flex flex-col hover:shadow-md transition-shadow cursor-pointer block"
+                >
+                  <div className="bg-gray-100 h-32 rounded mb-3 flex items-center justify-center text-center text-xs text-gray-500 p-2 overflow-hidden">
+                    {product.imagePlaceholder?.startsWith('http') ? (
+                      <img src={product.imagePlaceholder} alt={product.name} className="h-full object-contain" />
+                    ) : (
+                      <span>[Image: {product.name}]</span>
                     )}
-                    <div className="w-full mt-3 bg-blue-600 text-white py-2 rounded text-sm font-semibold text-center transition-colors">
-                      View Details
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="mb-2 mt-1">
-                      <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded inline-block">
-                        Quote on Request
-                      </span>
-                    </div>
-                    <div className="w-full mt-3 bg-[#25D366] text-white py-2 rounded text-sm font-semibold text-center transition-colors shadow-sm">
-                      Get Quote
-                    </div>
-                  </>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
+                  </div>
+                  
+                  <div className="flex-grow">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">{product.brand}</p>
+                    <h2 className="text-sm font-semibold leading-tight mt-1 mb-2 text-gray-800 line-clamp-2">
+                      {product.name}
+                    </h2>
+                  </div>
+                  
+                  <div className="mt-auto">
+                    {product.price ? (
+                      <>
+                        <div className="flex items-center space-x-2 text-sm mb-1">
+                          <span className="font-bold text-green-700">₹{product.price}</span>
+                          {product.originalPrice && (
+                            <span className="line-through text-gray-400 text-xs">₹{product.originalPrice}</span>
+                          )}
+                        </div>
+                        {product.discount && (
+                          <span className="text-xs text-red-500 font-medium mb-1 block">{product.discount}</span>
+                        )}
+                        <div className="w-full mt-3 bg-blue-600 text-white py-2 rounded text-sm font-semibold text-center transition-colors">
+                          View Details
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-2 mt-1">
+                          <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded inline-block">
+                            Quote on Request
+                          </span>
+                        </div>
+                        <div className="w-full mt-3 bg-[#25D366] text-white py-2 rounded text-sm font-semibold text-center transition-colors shadow-sm">
+                          Get Quote
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
       
-      {/* I updated the footer here to match the legal compliance text you added to the product detail page earlier */}
       <footer className="mt-12 py-8 px-4 border-t border-gray-200 text-center text-xs text-gray-400">
         <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
           RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
