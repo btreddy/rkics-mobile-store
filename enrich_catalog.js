@@ -2,12 +2,16 @@ import fs from 'fs';
 import csv from 'csv-parser';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import dotenv from 'dotenv';
+
+// Force it to read your Next.js local environment file
 dotenv.config({ path: '.env.local' });
 
-const GEMINI_API_KEY = "AQ.Ab8RN6J5npGJ6TZKu6rtqETPa2NwcaeXrkCtvMfyB99am2vppw";
-const SERPAPI_KEY = "bc480156c35dbc1e6bdeb9b5f96974cc65d514c2f22aa764da28a9c4b05c75f3";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// ... keep the rest of the script exactly the same ...
 
 async function getGeminiDescription(productName, brand) {
     if (!productName) return 'Professional construction chemical supplied by RKICS.';
