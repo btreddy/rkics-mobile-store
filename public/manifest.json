@@ -1,21 +1,23 @@
 {
-  "name": "RKICS Mobile Store",
-  "short_name": "RKICS Store",
-  "description": "Integrated Concrete Solutions B2B Store",
+  "name": "RKICS Store",
+  "short_name": "RKICS",
+  "description": "B2B Procurement Store",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "background_color": "#f9fafb",
+  "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
