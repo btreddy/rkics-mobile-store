@@ -26,9 +26,13 @@ export default function Home() {
     loadProducts();
   }, []);
 
-  // Dynamically extract unique brands from the database
+  // Dynamically extract unique brands, strip symbols, and force Uppercase
   const uniqueBrands = useMemo(() => {
-    const brands = products.map(p => p.brand).filter(Boolean);
+    const brands = products
+      .map(p => p.brand)
+      .filter(Boolean)
+      .map(brand => brand.replace(/[®™]/g, '').trim().toUpperCase());
+      
     return ['All', ...Array.from(new Set(brands)).sort()];
   }, [products]);
 
@@ -37,7 +41,10 @@ export default function Home() {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
                           product.brand?.toLowerCase().includes(searchLower);
-    const matchesBrand = selectedBrand === 'All' || product.brand === selectedBrand;
+                          
+    // Clean the product's brand before checking if it matches the dropdown
+    const productBrandClean = product.brand?.replace(/[®™]/g, '').trim().toUpperCase();
+    const matchesBrand = selectedBrand === 'All' || productBrandClean === selectedBrand;
     
     return matchesSearch && matchesBrand;
   });
