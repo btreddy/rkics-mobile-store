@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useCart } from './CartContext';
@@ -9,6 +9,7 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState('All');
 
   useEffect(() => {
     async function loadProducts() {
@@ -25,13 +26,20 @@ export default function Home() {
     loadProducts();
   }, []);
 
-  // Real-time filtering logic
+  // Dynamically extract unique brands from the database
+  const uniqueBrands = useMemo(() => {
+    const brands = products.map(p => p.brand).filter(Boolean);
+    return ['All', ...Array.from(new Set(brands)).sort()];
+  }, [products]);
+
+  // Real-time filtering logic (Search + Brand Dropdown)
   const filteredProducts = products.filter(product => {
     const searchLower = searchQuery.toLowerCase();
-    return (
-      product.name?.toLowerCase().includes(searchLower) ||
-      product.brand?.toLowerCase().includes(searchLower)
-    );
+    const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
+                          product.brand?.toLowerCase().includes(searchLower);
+    const matchesBrand = selectedBrand === 'All' || product.brand === selectedBrand;
+    
+    return matchesSearch && matchesBrand;
   });
 
   return (
@@ -46,12 +54,13 @@ export default function Home() {
         </button>
       </header>
 
-      {/* STICKY SEARCH BAR */}
-      <div className="sticky top-0 z-10 bg-gray-50 pb-4 pt-1 shadow-sm">
+      {/* STICKY SEARCH & FILTER BAR */}
+      <div className="sticky top-0 z-10 bg-gray-50 pb-4 pt-1 shadow-sm flex flex-col gap-3">
+        {/* Global Search Bar */}
         <div className="relative">
           <input
             type="text"
-            placeholder="Search catalogs, brands, or systems..."
+            placeholder="Search products or systems..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full border-2 border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-500 transition-colors text-sm font-medium text-gray-700"
@@ -60,24 +69,45 @@ export default function Home() {
             🔍
           </span>
         </div>
+
+        {/* Brand Dropdown & Product Counter */}
+        <div className="flex items-center justify-between">
+          <select 
+            value={selectedBrand} 
+            onChange={(e) => setSelectedBrand(e.target.value)}
+            className="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer"
+          >
+            {uniqueBrands.map(brand => (
+              <option key={brand} value={brand}>
+                {brand === 'All' ? 'All Catalogs' : brand}
+              </option>
+            ))}
+          </select>
+          <div className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'}
+          </div>
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-500 py-10 text-sm">Loading live products...</div>
+        <div className="text-center text-gray-500 py-10 text-sm">Loading live catalogs...</div>
       ) : (
         <>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 font-medium">No products found for "{searchQuery}"</p>
+              <p className="text-gray-500 font-medium">No items found.</p>
               <button 
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedBrand('All');
+                }}
                 className="mt-4 text-blue-600 text-sm font-bold underline"
               >
-                Clear Search
+                Clear Filters
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mt-2">
               {filteredProducts.map((product) => (
                 <Link 
                   href={`/product/${product.id}`} 

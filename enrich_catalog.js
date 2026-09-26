@@ -3,15 +3,14 @@ import csv from 'csv-parser';
 import { createObjectCsvWriter as createCsvWriter } from 'csv-writer';
 import dotenv from 'dotenv';
 
-// Force it to read your Next.js local environment file
-dotenv.config({ path: '.env.local' });
+// 1. Explicitly tell the script to read the Next.js local environment file
+dotenv.config({ path: '.env.local', override: true });
 
+// 2. Safely pull the keys from that file
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// ... keep the rest of the script exactly the same ...
 
 async function getGeminiDescription(productName, brand) {
     if (!productName) return 'Professional construction chemical supplied by RKICS.';
@@ -19,6 +18,7 @@ async function getGeminiDescription(productName, brand) {
     const prompt = `Write a concise, 2-sentence technical B2B description for the construction chemical product "${brand} ${productName}". Focus on its application and institutional value. Do not use marketing fluff.`;
     
     try {
+        // Using your authorized Gemini 3.5 Flash Lite model
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -26,7 +26,6 @@ async function getGeminiDescription(productName, brand) {
         });
         const data = await response.json();
         
-        // Catch API authentication errors explicitly
         if (data.error) {
             console.error(`\n⚠️ Gemini API Error: ${data.error.message}`);
             return 'Professional construction chemical supplied by RKICS.';
@@ -58,6 +57,12 @@ async function getSerpApiImage(productName, brand) {
 }
 
 async function processCatalog() {
+    // Quick check to ensure the keys actually loaded from .env.local
+    if (!GEMINI_API_KEY || !SERPAPI_KEY) {
+        console.error("\n❌ ERROR: Missing API Keys! Please check your .env.local file.");
+        process.exit(1);
+    }
+
     const results = [];
     
     console.log('Reading input.csv...');
@@ -65,7 +70,6 @@ async function processCatalog() {
         fs.createReadStream('input.csv')
             .pipe(csv())
             .on('data', (data) => {
-                // Only push rows that actually have a product name
                 if (data.name && data.name.trim() !== '') {
                     results.push(data);
                 }
@@ -102,6 +106,7 @@ async function processCatalog() {
             price: '' 
         });
 
+        // 4.5 second delay to stay safely under the 15 RPM limit
         await delay(4500);
     }
 
