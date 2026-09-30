@@ -1,9 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+
+  // Security State
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   // Form State
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
@@ -24,9 +31,24 @@ export default function AdminDashboard() {
   const [existingImageUrl, setExistingImageUrl] = useState('');
   const [existingPdsUrl, setExistingPdsUrl] = useState('');
 
+  // Security Lock: Check for active session before rendering or fetching data
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        // Unauthorized visitor: redirect to login
+        router.push('/login');
+      } else {
+        // Authorized admin: unlock the page and fetch data
+        setIsAuthenticated(true);
+        fetchProducts();
+      }
+      setIsAuthChecking(false);
+    };
+    
+    checkAuth();
+  }, [router]);
 
   async function fetchProducts() {
     const { data, error } = await supabase
@@ -119,7 +141,6 @@ export default function AdminDashboard() {
         finalPdsUrl = data.publicUrl;
       }
 
-      // Bulletproof null handling for optional numbers
       const parsedPrice = price.trim() === '' ? null : parseFloat(price);
       const parsedOriginalPrice = originalPrice.trim() === '' ? null : parseFloat(originalPrice);
 
@@ -159,11 +180,36 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  // Show a blank or loading state while checking credentials
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <p className="text-gray-500 font-medium">Verifying access...</p>
+      </div>
+    );
+  }
+
+  // Double-lock: Do not render the HTML if they bypassed the redirect
+  if (!isAuthenticated) return null;
+
   return (
     <main className="max-w-4xl mx-auto p-6 pb-20">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-black text-gray-900">RKICS Admin Portal</h1>
-        <Link href="/" className="text-blue-600 font-bold hover:underline">View Live Store →</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/" className="text-blue-600 font-bold hover:underline">View Live Store →</Link>
+          <button 
+            onClick={handleSignOut}
+            className="text-sm font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-12">
