@@ -146,7 +146,7 @@ export default function ProductDetail({ params }: { params: Promise<{ id: string
           RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
         </p>
         <p>© {new Date().getFullYear()} RKICS</p>
-        <Link href="/admin/dashboard" className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
+        <Link href="/admin/dashboard" prefetch={false} className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
           Admin Portal
         </Link>
       </footer>
