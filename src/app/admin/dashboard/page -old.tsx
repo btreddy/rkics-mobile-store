@@ -11,9 +11,6 @@ export default function AdminDashboard() {
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Search State (NEW)
-  const [searchTerm, setSearchTerm] = useState('');
-
   // Form State
   const [brand, setBrand] = useState('');
   const [name, setName] = useState('');
@@ -34,14 +31,16 @@ export default function AdminDashboard() {
   const [existingImageUrl, setExistingImageUrl] = useState('');
   const [existingPdsUrl, setExistingPdsUrl] = useState('');
 
-  // Security Lock
+  // Security Lock: Check for active session before rendering or fetching data
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
+        // Unauthorized visitor: redirect to login
         router.push('/login');
       } else {
+        // Authorized admin: unlock the page and fetch data
         setIsAuthenticated(true);
         fetchProducts();
       }
@@ -186,14 +185,7 @@ export default function AdminDashboard() {
     router.push('/login');
   };
 
-  // Filter products based on the search term
-  const filteredProducts = products.filter(product => {
-    const searchLower = searchTerm.toLowerCase();
-    const nameMatch = product.name && product.name.toLowerCase().includes(searchLower);
-    const brandMatch = product.brand && product.brand.toLowerCase().includes(searchLower);
-    return nameMatch || brandMatch;
-  });
-
+  // Show a blank or loading state while checking credentials
   if (isAuthChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -202,6 +194,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // Double-lock: Do not render the HTML if they bypassed the redirect
   if (!isAuthenticated) return null;
 
   return (
@@ -285,24 +278,12 @@ export default function AdminDashboard() {
       </div>
 
       <div>
-        <h2 className="text-2xl font-black mb-4 text-gray-900 border-b pb-2">Manage Existing Products</h2>
-        
-        {/* NEW SEARCH BAR */}
-        <div className="mb-6">
-          <input 
-            type="text" 
-            placeholder="🔍 Search products by name or brand..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:border-blue-500 shadow-sm"
-          />
-        </div>
-
-        {filteredProducts.length === 0 ? (
-          <p className="text-gray-500 bg-gray-50 p-4 rounded-lg border border-gray-100">No products match your search.</p>
+        <h2 className="text-2xl font-black mb-6 text-gray-900 border-b pb-2">Manage Existing Products</h2>
+        {products.length === 0 ? (
+          <p className="text-gray-500">No products uploaded yet.</p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {filteredProducts.map((product) => (
+            {products.map((product) => (
               <div key={product.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div className="flex items-center gap-4 flex-1">
                   {product.imagePlaceholder && (
