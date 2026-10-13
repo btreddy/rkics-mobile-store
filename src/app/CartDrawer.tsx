@@ -80,7 +80,17 @@ export function CartDrawer() {
               
               {/* QR Code Image */}
               <div className="border p-2 rounded-xl bg-white shadow-sm mb-4">
-                <img src="/images/upi-qr.png" alt="RKICS UPI QR Code" className="w-48 h-48 object-contain" />
+                <img 
+                  src="/images/upi-qr.png" 
+                  alt="RKICS UPI QR Code" 
+                  className="w-48 h-48 object-contain"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('/upi-qr.png')) {
+                      target.src = '/upi-qr.png';
+                    }
+                  }} 
+                />
               </div>
 
               <p className="text-xs font-bold text-gray-500 mb-6">UPI ID: payments@rkics</p>
