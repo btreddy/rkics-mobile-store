@@ -12,11 +12,10 @@ export default function Home() {
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('All');
-  const [selectedCategory, setSelectedCategory] = useState('All'); // NEW: Category Filter
+  const [selectedCategory, setSelectedCategory] = useState('All'); 
 
   useEffect(() => {
     async function loadProducts() {
-      // Fetch live data directly from Supabase, bypassing local cache
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -49,11 +48,10 @@ export default function Home() {
     return ['All', ...Array.from(new Set(categories)).sort()];
   }, [products]);
 
-  // Real-time filtering logic (Search + Brand + Category)
+  // Real-time filtering logic
   const filteredProducts = products.filter(product => {
     const searchLower = searchQuery.toLowerCase();
     
-    // Search by name, brand, or sub-category
     const matchesSearch = 
       product.name?.toLowerCase().includes(searchLower) ||
       product.brand?.toLowerCase().includes(searchLower) ||
@@ -80,7 +78,7 @@ export default function Home() {
       </header>
 
       {/* STICKY SEARCH & FILTER BAR */}
-      <div className="sticky top-0 z-10 bg-gray-50 pb-4 pt-1 shadow-sm flex flex-col gap-3">
+      <div className="sticky top-0 z-10 bg-gray-50 pb-3 pt-1 shadow-sm flex flex-col gap-3">
         {/* Global Search Bar */}
         <div className="relative">
           <input
@@ -93,12 +91,12 @@ export default function Home() {
           <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
         </div>
 
-        {/* Brand Dropdown & Product Counter */}
-        <div className="flex items-center justify-between">
+        {/* Dropdown Filters Side-by-Side */}
+        <div className="grid grid-cols-2 gap-2">
           <select 
             value={selectedBrand} 
             onChange={(e) => setSelectedBrand(e.target.value)}
-            className="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer shadow-sm"
+            className="w-full border-2 border-gray-200 rounded-lg px-2 py-2.5 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer shadow-sm truncate"
           >
             {uniqueBrands.map(brand => (
               <option key={brand} value={brand}>
@@ -106,26 +104,39 @@ export default function Home() {
               </option>
             ))}
           </select>
-          <div className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
-            {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'}
-          </div>
+          
+          <select 
+            value={selectedCategory} 
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full border-2 border-gray-200 rounded-lg px-2 py-2.5 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer shadow-sm truncate"
+          >
+            {uniqueCategories.map(cat => (
+              <option key={cat} value={cat}>
+                {cat === 'All' ? 'All Solutions' : cat}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* CATEGORY PILL FILTER */}
-        <div className="flex overflow-x-auto gap-2 pb-2 mt-1 no-scrollbar">
-          {uniqueCategories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold transition-colors shadow-sm border ${
-                selectedCategory === cat 
-                  ? 'bg-blue-600 text-white border-blue-600' 
-                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-              }`}
+        {/* Results Counter & Quick Clear */}
+        <div className="flex justify-between items-center px-1">
+          { (searchQuery !== '' || selectedBrand !== 'All' || selectedCategory !== 'All') ? (
+            <button 
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedBrand('All');
+                setSelectedCategory('All');
+              }}
+              className="text-xs font-bold text-red-600 hover:underline"
             >
-              {cat === 'All' ? 'All Solutions' : cat}
+              Clear Filters
             </button>
-          ))}
+          ) : (
+            <div></div> // Empty div to push counter to the right
+          )}
+          <div className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 shadow-sm ml-auto">
+            {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'}
+          </div>
         </div>
       </div>
 
@@ -135,17 +146,7 @@ export default function Home() {
         <>
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 font-medium">No items found.</p>
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedBrand('All');
-                  setSelectedCategory('All');
-                }}
-                className="mt-4 text-blue-600 text-sm font-bold underline"
-              >
-                Clear Filters
-              </button>
+              <p className="text-gray-500 font-medium">No items found matching your filters.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 mt-2">
