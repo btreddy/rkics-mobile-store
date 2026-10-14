@@ -8,11 +8,15 @@ export default function Home() {
   const { cartCount, setIsCartOpen } = useCart();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All'); // NEW: Category Filter
 
   useEffect(() => {
     async function loadProducts() {
+      // Fetch live data directly from Supabase, bypassing local cache
       const { data, error } = await supabase
         .from('products')
         .select('*')
@@ -26,7 +30,7 @@ export default function Home() {
     loadProducts();
   }, []);
 
-  // Dynamically extract unique brands, strip symbols, and force Uppercase
+  // Dynamically extract unique brands
   const uniqueBrands = useMemo(() => {
     const brands = products
       .map(p => p.brand)
@@ -36,17 +40,31 @@ export default function Home() {
     return ['All', ...Array.from(new Set(brands)).sort()];
   }, [products]);
 
-  // Real-time filtering logic (Search + Brand Dropdown)
+  // Dynamically extract unique categories
+  const uniqueCategories = useMemo(() => {
+    const categories = products
+      .map(p => p.category)
+      .filter(Boolean);
+      
+    return ['All', ...Array.from(new Set(categories)).sort()];
+  }, [products]);
+
+  // Real-time filtering logic (Search + Brand + Category)
   const filteredProducts = products.filter(product => {
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = product.name?.toLowerCase().includes(searchLower) ||
-                          product.brand?.toLowerCase().includes(searchLower);
+    
+    // Search by name, brand, or sub-category
+    const matchesSearch = 
+      product.name?.toLowerCase().includes(searchLower) ||
+      product.brand?.toLowerCase().includes(searchLower) ||
+      product.sub_category?.toLowerCase().includes(searchLower);
                           
-    // Clean the product's brand before checking if it matches the dropdown
     const productBrandClean = product.brand?.replace(/[®™]/g, '').trim().toUpperCase();
     const matchesBrand = selectedBrand === 'All' || productBrandClean === selectedBrand;
     
-    return matchesSearch && matchesBrand;
+    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+    
+    return matchesSearch && matchesBrand && matchesCategory;
   });
 
   return (
@@ -55,7 +73,7 @@ export default function Home() {
         <h1 className="text-xl font-bold text-gray-800">RKICS Store</h1>
         <button 
           onClick={() => setIsCartOpen(true)}
-          className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold cursor-pointer hover:bg-blue-200 transition"
+          className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold cursor-pointer hover:bg-blue-200 transition shadow-sm"
         >
           Cart: {cartCount}
         </button>
@@ -70,11 +88,9 @@ export default function Home() {
             placeholder="Search products or systems..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border-2 border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-500 transition-colors text-sm font-medium text-gray-700"
+            className="w-full border-2 border-gray-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-500 transition-colors text-sm font-medium text-gray-700 shadow-sm"
           />
-          <span className="absolute left-3 top-3.5 text-gray-400">
-            🔍
-          </span>
+          <span className="absolute left-3 top-3.5 text-gray-400">🔍</span>
         </div>
 
         {/* Brand Dropdown & Product Counter */}
@@ -82,11 +98,11 @@ export default function Home() {
           <select 
             value={selectedBrand} 
             onChange={(e) => setSelectedBrand(e.target.value)}
-            className="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer"
+            className="border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 bg-white cursor-pointer shadow-sm"
           >
             {uniqueBrands.map(brand => (
               <option key={brand} value={brand}>
-                {brand === 'All' ? 'All Catalogs' : brand}
+                {brand === 'All' ? 'All Brands' : brand}
               </option>
             ))}
           </select>
@@ -94,10 +110,27 @@ export default function Home() {
             {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'}
           </div>
         </div>
+
+        {/* CATEGORY PILL FILTER */}
+        <div className="flex overflow-x-auto gap-2 pb-2 mt-1 no-scrollbar">
+          {uniqueCategories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-bold transition-colors shadow-sm border ${
+                selectedCategory === cat 
+                  ? 'bg-blue-600 text-white border-blue-600' 
+                  : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {cat === 'All' ? 'All Solutions' : cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-500 py-10 text-sm">Loading live catalogs...</div>
+        <div className="text-center text-gray-500 py-10 text-sm font-medium animate-pulse">Loading live catalogs...</div>
       ) : (
         <>
           {filteredProducts.length === 0 ? (
@@ -107,6 +140,7 @@ export default function Home() {
                 onClick={() => {
                   setSearchQuery('');
                   setSelectedBrand('All');
+                  setSelectedCategory('All');
                 }}
                 className="mt-4 text-blue-600 text-sm font-bold underline"
               >
@@ -119,47 +153,61 @@ export default function Home() {
                 <Link 
                   href={`/product/${product.id}`} 
                   key={product.id} 
-                  className="bg-white border rounded-lg p-3 shadow-sm flex flex-col hover:shadow-md transition-shadow cursor-pointer block"
+                  className="bg-white border rounded-lg p-3 shadow-sm flex flex-col hover:shadow-md transition-shadow cursor-pointer"
                 >
-                  <div className="bg-gray-100 h-32 rounded mb-3 flex items-center justify-center text-center text-xs text-gray-500 p-2 overflow-hidden">
+                  <div className="bg-gray-50 h-32 rounded mb-2 flex items-center justify-center text-center text-xs text-gray-500 p-2 overflow-hidden border border-gray-100">
                     {product.imagePlaceholder?.startsWith('http') ? (
-                      <img src={product.imagePlaceholder} alt={product.name} className="h-full object-contain" />
+                      <img src={product.imagePlaceholder} alt={product.name} className="h-full object-contain mix-blend-multiply" />
                     ) : (
-                      <span>[Image: {product.name}]</span>
+                      <span>[No Image]</span>
                     )}
                   </div>
                   
                   <div className="flex-grow">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">{product.brand}</p>
-                    <h2 className="text-sm font-semibold leading-tight mt-1 mb-2 text-gray-800 line-clamp-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.brand}</p>
+                    <h2 className="text-sm font-bold leading-tight mt-1 mb-1 text-gray-900 line-clamp-2">
                       {product.name}
                     </h2>
+                    
+                    {/* Visual Category Tags */}
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {product.category && (
+                        <span className="text-[9px] bg-purple-50 border border-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
+                          {product.category}
+                        </span>
+                      )}
+                      {product.sub_category && (
+                        <span className="text-[9px] bg-blue-50 border border-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider line-clamp-1">
+                          {product.sub_category}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="mt-auto">
                     {product.price ? (
                       <>
-                        <div className="flex items-center space-x-2 text-sm mb-1">
-                          <span className="font-bold text-green-700">₹{product.price}</span>
+                        <div className="flex items-baseline space-x-2 text-sm mb-1">
+                          <span className="font-black text-green-700 text-base">₹{product.price}</span>
                           {product.originalPrice && (
-                            <span className="line-through text-gray-400 text-xs">₹{product.originalPrice}</span>
+                            <span className="line-through text-gray-400 text-xs font-semibold">₹{product.originalPrice}</span>
                           )}
                         </div>
                         {product.discount && (
-                          <span className="text-xs text-red-500 font-medium mb-1 block">{product.discount}</span>
+                          <span className="text-[10px] text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded inline-block mb-2">{product.discount}</span>
                         )}
-                        <div className="w-full mt-3 bg-blue-600 text-white py-2 rounded text-sm font-semibold text-center transition-colors">
+                        <div className="w-full mt-2 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-bold text-center transition-colors">
                           View Details
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="mb-2 mt-1">
-                          <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded inline-block">
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2 py-1 rounded-md inline-block">
                             Quote on Request
                           </span>
                         </div>
-                        <div className="w-full mt-3 bg-[#25D366] text-white py-2 rounded text-sm font-semibold text-center transition-colors shadow-sm">
+                        <div className="w-full mt-2 bg-slate-800 text-white py-2.5 rounded-lg text-sm font-bold text-center transition-colors">
                           Get Quote
                         </div>
                       </>
@@ -176,8 +224,8 @@ export default function Home() {
         <p className="mb-4 max-w-sm mx-auto text-[10px] leading-relaxed text-gray-400/80 text-justify">
           RKICS is a marketing and business-support brand. Products and services are supplied, quoted, invoiced and warranted by the specific legal entity identified in the applicable quotation, invoice or agreement. Associated firms may operate independently with separate registrations, responsibilities and commercial terms.
         </p>
-        <p>© {new Date().getFullYear()} RKICS</p>
-        <Link href="/admin/dashboard" prefetch={false} className="text-gray-400 hover:text-gray-600 underline mt-2 inline-block">
+        <p className="font-semibold text-gray-500">© {new Date().getFullYear()} RKICS</p>
+        <Link href="/admin" prefetch={false} className="text-gray-400 hover:text-blue-600 font-medium mt-3 inline-block transition-colors">
           Admin Portal
         </Link>
       </footer>
